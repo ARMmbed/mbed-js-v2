@@ -83,8 +83,8 @@ void jsmbed_js_exit() {
 void jsmbed_js_launch() {
     jsmbed_js_init();
 
-    puts("   JerryScript in mbed\r\n");
-    puts("   build date:  " __DATE__ " \r\n");
+    puts("   Mbed.js\r\n");
+    puts("   Build date:  " __DATE__ " \r\n");
 
     if (load_javascript() == 0) {
         mbed::js::event_loop();

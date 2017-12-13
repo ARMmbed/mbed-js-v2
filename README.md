@@ -8,25 +8,40 @@ Work in progress.
 
 ## How to build
 
-1. Install Mbed CLI.
+1. Install Mbed CLI, Python 2.7 and node.js 8.x.
 1. Import this project:
 
     ```
     $ mbed import https://github.com/janjongboom/mbed-js-v2
     ```
 
-1. Turn your JavaScript into C:
+1. Install dependencies:
 
     ```
-    $ cd mbed-js
-    $ pip install -r requirements.txt
     $ npm install
-    $ gulp --target=K64F --js=../source/js/main.js
     ```
 
 1. Build the project for your target:
 
     ```
-    $ mbed compile -m K64F -t GCC_ARM
+    $ gulp build --js ./source/main.js --target=K64F
     ```
+
+1. Drag the `.bin` (or `.hex`) file to your board to flash.
+
+**Changing build options**
+
+To change the build options, invoke Mbed CLI by hand.
+
+First turn your JS into C++ code via:
+
+```
+$ gulp --js ./source/main.js --target=K64F
+```
+
+Then, compile manually:
+
+```
+$ mbed compile -m K64F -t GCC_ARM --profile=debug
+```
 

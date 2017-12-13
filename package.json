@@ -1,0 +1,10 @@
+{
+  "name": "mbed-js-v2-example",
+  "description": "Mbed.js example application",
+  "author": "Jan Jongboom <jan.jongboom@arm.com>",
+  "repository": "https://github.com/ARMmbed/mbed-js-v2",
+  "dependencies": {
+    "gulp": "^3.9.1",
+    "mbed-js": "file:mbed-js"
+  }
+}

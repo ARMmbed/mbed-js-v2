@@ -20,7 +20,7 @@ module.exports = function(gulp) {
 
     const fs = require('fs');
     const del = require('del');
-    const exec = require('child-process-promise').exec;
+    const spawn = require('child-process-promise').spawn;
 
     const Path = require('path');
 
@@ -29,10 +29,13 @@ module.exports = function(gulp) {
     const node_package = JSON.parse(fs.readFileSync(Path.join(__dirname, '..', 'package.json')));
 
     const buildDir = Path.join(__dirname, '..', 'build');
-    const jsBuildDir = Path.join(buildDir, 'out');
 
     gulp.task('bundle', function() {
         var noParse = [];
+
+        if (!util.env.js || !fs.existsSync(util.env.js)) {
+            throw 'No main.js specified: Call `gulp --js path/to/main.js`';
+        }
 
         try {
             noParse.push(require.resolve('bleno'));
@@ -62,54 +65,40 @@ module.exports = function(gulp) {
                 .pipe(gulp.dest(buildDir));
     });
 
-    // function cpp_name_sanitise(name) {
-    //     let out_name = name.replace(new RegExp('-', 'g'), '_')
-    //                        .replace(new RegExp('\\\\', 'g'), '_')
-    //                        .replace(new RegExp('\\?', 'g'), '_')
-    //                        .replace(new RegExp('\'', 'g'), '_')
-    //                        .replace(new RegExp('"', 'g'), '_');
-
-    //     if ("0123456789".indexOf(out_name[0]) != -1) {
-    //         out_name = '_' + out_name;
-    //     }
-
-    //     return out_name;
-    // }
-
-    // function cpp_string_sanitise(string) {
-    //     let out_str = string.replace(new RegExp('\\\\', 'g'), '\\\\')
-    //                         .replace(new RegExp("\n", 'g'), "\\n")
-    //                         .replace(new RegExp("\"", 'g'), '\\"');
-
-    //     return out_str;
-    // }
-
-    gulp.task('generate-pins', ['make-build-dir'], function() {
-        // @todo: properly spawn this. This breaks with a space in the path
-        let script = Path.join(__dirname, '..', 'tools', 'generate_pins.py');
-        return exec('python ' + script + ' ' + util.env.target,
-                    { cwd: jsBuildDir });
+    gulp.task('pip-requirements', function() {
+        return spawn(
+            'pip',
+            [ 'install', '-r', 'requirements.txt' ],
+            { cwd: Path.join(__dirname, '..', 'tools')/*, stdio: 'inherit' */ });
     });
 
-    gulp.task('cppify', ['bundle'], function() {
-        // @todo: properly spawn this. This breaks with a space in the path
+    gulp.task('generate-pins', ['make-build-dir', 'pip-requirements'], function() {
+        let script = Path.join(__dirname, '..', 'tools', 'generate_pins.py');
+
+        if (!util.env.target) {
+            throw 'No target specified. Use `gulp --target=YOUR_TARGET`'
+        }
+
+        return spawn('python', [ script, util.env.target ], { cwd: buildDir });
+    });
+
+    gulp.task('cppify', ['bundle', 'pip-requirements'], function() {
         let script = Path.join(__dirname, '..', 'jerryscript', 'tools', 'js2c.py');
-        return exec([
-            'python ' + script,
-            ' --ignore pins.js',
+
+        let p = spawn('python', [
+            script,
+            '--ignore', 'pins.js',
             '--no-main',
-            '--dest ' + buildDir,
-            '--js-source ' + buildDir
-        ].join(' '), { cwd: buildDir });
+            '--dest', buildDir,
+            '--js-source', buildDir
+        ], { cwd: buildDir/*, stdio: 'inherit' */ });
+
+        return p;
     });
 
     gulp.task('make-build-dir', function() {
         if (!fs.existsSync(buildDir)) {
             fs.mkdirSync(buildDir);
-        }
-
-        if (!fs.existsSync(jsBuildDir)) {
-            fs.mkdirSync(jsBuildDir);
         }
     });
 
@@ -133,7 +122,7 @@ module.exports = function(gulp) {
                         for (let i = 0; i < keys.length; i++) {
                             if (list[keys[i]] && !list[keys[i]].missing) {
                                 // check for mbedjs.json
-                                var path = list[keys[i]].path + '/mbedjs.json';
+                                var path = Path.join(list[keys[i]].path, '/mbedjs.json');
 
                                 try {
                                     fs.statSync(path);
@@ -204,5 +193,16 @@ module.exports = function(gulp) {
                 });
     });
 
-    gulp.task('default', ['generate-cpp']);
+    gulp.task('build', ['generate-cpp'], function() {
+        let p = spawn('mbed', [ 'compile', '-m', util.env.target, '-t', 'GCC_ARM' ], { stdio: 'inherit' });
+
+        return p;
+    });
+
+    if (util.env.build) {
+        gulp.task('default', ['build']);
+    }
+    else {
+        gulp.task('default', ['generate-cpp']);
+    }
 };
