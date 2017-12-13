@@ -21,6 +21,7 @@ module.exports = function(gulp) {
     const fs = require('fs');
     const del = require('del');
     const spawn = require('child-process-promise').spawn;
+    const find = require('find');
 
     const Path = require('path');
 
@@ -108,49 +109,23 @@ module.exports = function(gulp) {
     }
 
     function list_libs() {
-        return new Promise(function(resolve, reject) {
-            npm.load({ production: true, depth: 0, progress: false }, function(err, npm) {
-                var native_packages = [];
-                npm.commands.ls([], true, function dependencies(err, data, lite) {
-                    function recurse_dependencies(list) {
-                        if (!list) {
-                            return;
-                        }
 
-                        let keys = Object.keys(list);
+        return new Promise((resolve, reject) => {
+            find.file(/mbedjs\.json$/, process.cwd(), function(f) {
+                let data = f.map(path => {
+                    // @todo: async
+                    let content = JSON.parse(fs.readFileSync(path, 'utf8'));
 
-                        for (let i = 0; i < keys.length; i++) {
-                            if (list[keys[i]] && !list[keys[i]].missing) {
-                                // check for mbedjs.json
-                                var path = Path.join(list[keys[i]].path, '/mbedjs.json');
-
-                                try {
-                                    fs.statSync(path);
-                                } catch (e) {
-                                    recurse_dependencies(list[keys[i]].dependencies);
-                                    continue;
-                                }
-
-                                list[keys[i]].path = list[keys[i]].path.replace(new RegExp(/\\/, 'g'), "/");
-
-                                var json_data = JSON.parse(fs.readFileSync(path));
-
-                                native_packages.push({
-                                    name: list[keys[i]].name,
-                                    abs_source: json_data.source.map(function(dir) {
-                                        return list[keys[i]].path.replace("\\", "/") + '/' + dir
-                                    }),
-                                    config: json_data
-                                });
-                                recurse_dependencies(list[keys[i]].dependencies);
-                            }
-                        }
+                    return {
+                        name: content.name,
+                        abs_source: content.source.map(dir => {
+                            return Path.resolve(Path.dirname(path), dir);
+                        }),
+                        config: content
                     }
-
-                    recurse_dependencies(data.dependencies);
-
-                    resolve(native_packages);
                 });
+
+                resolve(data);
             });
         });
     }
