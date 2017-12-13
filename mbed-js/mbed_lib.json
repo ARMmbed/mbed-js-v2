@@ -1,4 +1,12 @@
 {
+    "name": "mbed-js",
+    "config": {
+        "jerry-heap-size": {
+            "help": "Size of the JerryScript heap (in bytes)",
+            "value": "16384",
+            "macro_name": "CONFIG_MEM_HEAP_AREA_SIZE"
+        }
+    },
     "target_overrides": {
         "NRF52_DK": {
             "target.uart_hwfc": 0

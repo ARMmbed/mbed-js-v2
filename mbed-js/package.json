@@ -1,0 +1,35 @@
+{
+  "name": "mbed-js",
+  "description": "JerryScript build system for Mbed OS 5",
+  "private": true,
+  "version": "1.0.0",
+  "author": {
+    "name": "Jan Jongboom (Arm)",
+    "email": "jan.jongboom@arm.com"
+  },
+  "license": "Apache-2.0",
+  "main": "jerryscript-mbed-gulp/main.js",
+  "readmeFilename": "README.md",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "browserify": "^13.1.0",
+    "child-process-promise": "^2.1.3",
+    "del": "^2.2.2",
+    "gulp": "^3.9.1",
+    "gulp-filter": "^4.0.0",
+    "gulp-print": "^2.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-run": "^1.7.1",
+    "gulp-template": "^4.0.0",
+    "gulp-uglify": "^2.0.0",
+    "gulp-util": "^3.0.7",
+    "npm": "^3.10.6",
+    "promisify-node": "^0.4.0",
+    "uglify-js": "^2.7.3",
+    "uglifyify": "^3.0.3",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}

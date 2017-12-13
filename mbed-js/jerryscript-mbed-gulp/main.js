@@ -1,8 +1,6 @@
 'use strict';
 
 module.exports = function(gulp) {
-    const JERRYSCRIPT_REVISION = '8ebbfda996cf1dc27b64f84ec9122c19c6fb90f1';
-
     const run = require('gulp-run');
     const util = require('gulp-util');
     const print = require('gulp-print');
@@ -24,9 +22,14 @@ module.exports = function(gulp) {
     const del = require('del');
     const exec = require('child-process-promise').exec;
 
+    const Path = require('path');
+
     const isWindows = require('os').platform() === 'win32';
 
-    const node_package = JSON.parse(fs.readFileSync('./package.json'));
+    const node_package = JSON.parse(fs.readFileSync(Path.join(__dirname, '..', 'package.json')));
+
+    const buildDir = Path.join(__dirname, '..', 'build');
+    const jsBuildDir = Path.join(buildDir, 'out');
 
     gulp.task('bundle', function() {
         var noParse = [];
@@ -36,7 +39,7 @@ module.exports = function(gulp) {
         } catch (e) { /* empty */ }
 
         const b = browserify({
-            entries: node_package.main,
+            entries: util.env.js, // Path.join(__dirname, '..', '..', 'source', 'js', 'main.js'),
             noParse: noParse,
             builtins: false
         });
@@ -56,92 +59,58 @@ module.exports = function(gulp) {
                 .pipe(buffer())
 
                 // output bundled js
-                .pipe(gulp.dest('./build/js/'));
+                .pipe(gulp.dest(buildDir));
     });
 
-    function cpp_name_sanitise(name) {
-        let out_name = name.replace(new RegExp('-', 'g'), '_')
-                           .replace(new RegExp('\\\\', 'g'), '_')
-                           .replace(new RegExp('\\?', 'g'), '_')
-                           .replace(new RegExp('\'', 'g'), '_')
-                           .replace(new RegExp('"', 'g'), '_');
+    // function cpp_name_sanitise(name) {
+    //     let out_name = name.replace(new RegExp('-', 'g'), '_')
+    //                        .replace(new RegExp('\\\\', 'g'), '_')
+    //                        .replace(new RegExp('\\?', 'g'), '_')
+    //                        .replace(new RegExp('\'', 'g'), '_')
+    //                        .replace(new RegExp('"', 'g'), '_');
 
-        if ("0123456789".indexOf(out_name[0]) != -1) {
-            out_name = '_' + out_name;
-        }
+    //     if ("0123456789".indexOf(out_name[0]) != -1) {
+    //         out_name = '_' + out_name;
+    //     }
 
-        return out_name;
-    }
+    //     return out_name;
+    // }
 
-    function cpp_string_sanitise(string) {
-        let out_str = string.replace(new RegExp('\\\\', 'g'), '\\\\')
-                            .replace(new RegExp("\n", 'g'), "\\n")
-                            .replace(new RegExp("\"", 'g'), '\\"');
+    // function cpp_string_sanitise(string) {
+    //     let out_str = string.replace(new RegExp('\\\\', 'g'), '\\\\')
+    //                         .replace(new RegExp("\n", 'g'), "\\n")
+    //                         .replace(new RegExp("\"", 'g'), '\\"');
 
-        return out_str;
-    }
+    //     return out_str;
+    // }
 
-    gulp.task('cppify', ['getlibs', 'bundle'], function() {
-        return exec("python jerryscript/targets/tools/js2c.py --ignore pins.js --no-main",
-                    { cwd: './build' });
+    gulp.task('generate-pins', ['make-build-dir'], function() {
+        // @todo: properly spawn this. This breaks with a space in the path
+        let script = Path.join(__dirname, '..', 'tools', 'generate_pins.py');
+        return exec('python ' + script + ' ' + util.env.target,
+                    { cwd: jsBuildDir });
     });
 
-    gulp.task('ignorefile', function() {
-        return gulp.src(__dirname + '/tmpl/mbedignore.tmpl')
-                   .pipe(rename('.mbedignore'))
-                   .pipe(gulp.dest('./build/'));
-    });
-
-    gulp.task('makefile', ['make-build-dir'], function() {
-        return gulp.src(__dirname + '/tmpl/Makefile.tmpl')
-                   .pipe(rename('Makefile'))
-                   .pipe(gulp.dest('./build/'));
-    });
-
-    // avoid deleting jerryscript et. al, since it makes subsequent builds really slow
-    gulp.task('clean', function() {
-        return del(['build/out']);
-    });
-
-    // delete all the things
-    gulp.task('deepclean', function() {
-        return del(['build']);
+    gulp.task('cppify', ['bundle'], function() {
+        // @todo: properly spawn this. This breaks with a space in the path
+        let script = Path.join(__dirname, '..', 'jerryscript', 'tools', 'js2c.py');
+        return exec([
+            'python ' + script,
+            ' --ignore pins.js',
+            '--no-main',
+            '--dest ' + buildDir,
+            '--js-source ' + buildDir
+        ].join(' '), { cwd: buildDir });
     });
 
     gulp.task('make-build-dir', function() {
-        if (!fs.existsSync('./build')) {
-            fs.mkdirSync('./build');
+        if (!fs.existsSync(buildDir)) {
+            fs.mkdirSync(buildDir);
         }
 
-        if (!fs.existsSync('./build/source')) {
-            fs.mkdirSync('./build/source');
+        if (!fs.existsSync(jsBuildDir)) {
+            fs.mkdirSync(jsBuildDir);
         }
-    });
-
-    gulp.task('get-jerryscript', ['makefile'], function() {
-        if (!fs.existsSync('./build/jerryscript')) {
-            let commands = [
-                'git clone https://github.com/jerryscript-project/jerryscript',
-                'cd jerryscript',
-                'git checkout ' + JERRYSCRIPT_REVISION,
-                'cd ..',
-                'pip install -r jerryscript/targets/mbedos5/tools/requirements.txt',
-            ];
-
-            let cmd;
-            if (isWindows) {
-                cmd = commands.join(' & ');
-            }
-            else {
-                cmd = commands.join('; ');
-            }
-
-            return run(cmd, { cwd: './build' }).exec();
-        }
-    });
-
-    gulp.task('getlibs', ['get-jerryscript'], function() {
-        return run('make getlibs', { cwd: './build/jerryscript/targets/mbedos5' }).exec();
     });
 
     function dependencies(obj) {
@@ -215,7 +184,7 @@ module.exports = function(gulp) {
         });
     }
 
-    gulp.task('build', ['getlibs', 'cppify', 'ignorefile', 'makefile'], function() {
+    gulp.task('generate-cpp', ['cppify', 'generate-pins'], function() {
         return list_libs()
                 .then(function(libs) {
                     var native_list = libs.map(function(p) { return util.colors.cyan(p.name) });
@@ -226,34 +195,14 @@ module.exports = function(gulp) {
                         util.log("Found no native packages.");
                     }
 
-                    var gulp_stream = gulp.src(__dirname + '/tmpl/main.cpp.tmpl')
-                                        .pipe(rename('main.cpp'))
+                    var gulp_stream = gulp.src(__dirname + '/tmpl/mbed-js.h.tmpl')
+                                        .pipe(rename('mbed-js.h'))
                                         .pipe(template({
                                             libraries: libs
                                         }))
-                                        .pipe(gulp.dest('./build/source/'));
-
-                    return new Promise(function(resolve, reject) {
-                        gulp_stream.on('end', function() {
-                            // include the native_extras library if it exists
-                            fs.stat("./native_extras", function(err) {
-                                var lib_dirs = libs.map(function(lib) { return lib.abs_source.join(':'); });
-
-                                if (!err) {
-                                    lib_dirs.push("../../../../native_extras/");
-                                }
-
-                                var lib_source_files = lib_dirs.join(':');
-
-                                resolve(run('make BOARD=' + util.env.target + ' EXTRAS=' + lib_source_files, { cwd: './build', verbosity: 3 }).exec()
-                                .pipe(print())
-                                .pipe(rename('build.log'))
-                                .pipe(gulp.dest('./build')));
-                            });
-                        });
-                    });
-                })
+                                        .pipe(gulp.dest(buildDir));
+                });
     });
 
-    gulp.task('default', ['build']);
+    gulp.task('default', ['generate-cpp']);
 };

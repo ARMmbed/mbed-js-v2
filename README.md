@@ -15,10 +15,13 @@ Work in progress.
     $ mbed import https://github.com/janjongboom/mbed-js-v2
     ```
 
-1. Generate pin definitions for your target:
+1. Turn your JavaScript into C:
 
     ```
-    $ python mbed-js/tools/generate_pins.py K64F
+    $ cd mbed-js
+    $ pip install -r requirements.txt
+    $ npm install
+    $ gulp --target=K64F --js=../source/js/main.js
     ```
 
 1. Build the project for your target:

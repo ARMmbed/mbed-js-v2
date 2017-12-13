@@ -33,7 +33,8 @@ from pycparserext.ext_c_parser import GnuCParser
 from pycparser import parse_file, c_ast, c_generator
 
 # import mbed tools
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mbed-os'))
+mbed_os_dir = os.path.join(os.path.dirname(__file__), '../..', 'mbed-os')
+sys.path.append(mbed_os_dir)
 from tools.targets import Target
 
 LICENSE = '''/* Copyright JS Foundation and other contributors, http://js.foundation
@@ -197,9 +198,9 @@ def main():
     """
     Perform the main function of this program
     """
-    if not os.path.exists('./mbed-os'):
+    if not os.path.exists(mbed_os_dir):
         print("Fatal: mbed-os directory does not exist.")
-        print("Try running 'make getlibs'")
+        print("Try running 'mbed deploy'")
         sys.exit(1)
 
     description = """
@@ -212,11 +213,11 @@ def main():
     parser.add_argument('board', help='mbed board name')
     parser.add_argument('-o',
                         help='Output JavaScript file (default: %(default)s)',
-                        default='js/pins.js',
+                        default=os.path.join(os.path.dirname(__file__), '../build', 'pins.js'),
                         type=argparse.FileType('w'))
     parser.add_argument('-c',
                         help='Output C++ file (default: %(default)s)',
-                        default='source/pins.cpp',
+                        default=os.path.join(os.path.dirname(__file__), '../build', 'pins.cpp'),
                         type=argparse.FileType('w'))
 
     args = parser.parse_args()
@@ -226,7 +227,7 @@ def main():
 
     directory_labels = ['TARGET_' + label for label in target.labels] + target.macros
 
-    targets_dir = os.path.join('.', 'mbed-os', 'targets')
+    targets_dir = os.path.join(mbed_os_dir, 'targets')
 
     pins_file = find_file(targets_dir, directory_labels, 'PinNames.h')
 
@@ -234,7 +235,7 @@ def main():
     defines = list(directory_labels)
 
     # enumerate pins from PinNames.h
-    pins = enumerate_pins(pins_file, ['./tools'] + list(includes), defines)
+    pins = enumerate_pins(pins_file, [os.path.dirname(__file__)] + list(includes), defines)
 
     # first sort alphabetically, then by length.
     pins = [(x, pins[x]) for x in pins]  # turn dict into tuples, which can be sorted
