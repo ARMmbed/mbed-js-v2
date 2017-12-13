@@ -1,5 +1,9 @@
 var led = new DigitalOut(LED1);
 
-setInterval(function() {
+var iv = setInterval(function() {
     led.write(led.read() === 0 ? 1 : 0);
 }, 500);
+
+print("To stop LED1 from blinking, run `clearInterval(" + iv + ")`");
+
+repl_start();
