@@ -12,12 +12,13 @@ Work in progress.
 1. Import this project:
 
     ```
-    $ mbed import https://github.com/janjongboom/mbed-js-v2
+    $ mbed import https://github.com/armmbed/mbed-js-v2
     ```
 
 1. Install dependencies:
 
     ```
+    $ npm install -g gulp
     $ npm install
     ```
 
