@@ -16,7 +16,7 @@
 #define _BSD_SOURCE
 #include <stdarg.h>
 #include <stdlib.h>
-#include <sys/time.h>
+#include <time.h>
 
 #include "jerry-core/include/jerryscript-port.h"
 
