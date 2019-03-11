@@ -15,7 +15,14 @@
 #ifndef _JERRYSCRIPT_MBED_LAUNCHER_LAUNCHER_H
 #define _JERRYSCRIPT_MBED_LAUNCHER_LAUNCHER_H
 
+#define SYNTAX_ERROR_CONTEXT_SIZE 2
+
+#include "mbed.h"
+#include "jerryscript.h"
+
 void jsmbed_js_launch(void);
 void jsmbed_js_exit(void);
+void jsmbed_js_print_unhandled_exception(jerry_value_t error_value, /**< error value */
+                                         const jerry_char_t *source_p);
 
 #endif  // _JERRYSCRIPT_MBED_LAUNCHER_LAUNCHER_H

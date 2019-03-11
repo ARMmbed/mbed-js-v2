@@ -12,5 +12,8 @@
             "target.uart_hwfc": 0
         }
     },
-    "macros": ["JERRY_JS_PARSER=1"]
+    "macros": [
+        "JERRY_JS_PARSER=1",
+        "JERRY_ENABLE_ERROR_MESSAGES=1"
+    ]
 }
