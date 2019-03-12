@@ -44,9 +44,7 @@ class EventLoop {
     }
 
     void go() {
-        while (true) {
-            queue.dispatch();
-        }
+        queue.dispatch_forever();
     }
 
     Callback<void()> wrapFunction(jerry_value_t f) {
