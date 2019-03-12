@@ -143,7 +143,7 @@ def write_pins_to_file(pins, pins_file, out_cpp_file):
     Write the generated pins for a specified mbed board into the output C++ file.
     """
 
-    include = '\n#include "../{}"'.format(pins_file)
+    include = '\n#include "PinNames.h"'
 
     count = '''
 unsigned int jsmbed_js_magic_string_count = {};
