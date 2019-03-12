@@ -4,5 +4,8 @@
             "platform.stdio-baud-rate": 115200,
             "platform.stdio-convert-newlines": true
         }
-    }
+    },
+    "macros": [
+        "MBED_TICKLESS=1"
+    ]
 }
