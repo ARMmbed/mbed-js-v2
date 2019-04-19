@@ -121,7 +121,14 @@ def enumerate_pins(c_source_file, include_dirs, definitions):
     Enumerate pins specified in PinNames.h, by looking for a PinName enum
     typedef somewhere in the file.
     """
-    definitions += ['__attribute(x)__=', '__extension__(x)=', 'register=', '__IO=', 'uint32_t=unsigned int']
+    definitions += [
+        '__attribute(x)__=',
+        '__extension__(x)=',
+        'register=',
+        '__IO=',
+        'uint32_t=unsigned int',
+        '_UINT32_T_DECLARED'
+    ]
 
     gcc_args = ['-E', '-fmerge-all-constants']
     gcc_args += ['-I' + directory for directory in include_dirs]
