@@ -179,7 +179,7 @@ void jsmbed_js_launch() {
 void jsmbed_js_print_unhandled_exception (jerry_value_t error_value, /**< error value */
                            const jerry_char_t *source_p) /**< source_p */
 {
-  assert (jerry_value_is_error (error_value));
+  if (!jerry_value_is_error (error_value)) return;
 
   error_value = jerry_get_value_from_error (error_value, false);
   jerry_value_t err_str_val = jerry_value_to_string (error_value);
@@ -197,7 +197,7 @@ void jsmbed_js_print_unhandled_exception (jerry_value_t error_value, /**< error 
   else
   {
     jerry_size_t sz = jerry_string_to_char_buffer (err_str_val, err_str_buf, err_str_size);
-    assert (sz == err_str_size);
+    if (sz != err_str_size) return;
     err_str_buf[err_str_size] = 0;
 
     if (jerry_is_feature_enabled (JERRY_FEATURE_ERROR_MESSAGES)
